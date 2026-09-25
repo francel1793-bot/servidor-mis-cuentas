@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Mis Cuentas</title>
+<style>
+  :root{
+    --paper: #EFE7D3;
+    --paper-card: #FBF7EC;
+    --ink: #26314A;
+    --ink-soft: #5C6478;
+    --rule: #C9BD9C;
+    --gasto: #A2402F;
+    --ingreso: #2F6B4F;
+    --gold: #A9812F;
+    --shadow: rgba(38,49,74,0.14);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    background: var(--paper);
+    background-image:
+      repeating-linear-gradient(180deg, rgba(38,49,74,0.035) 0px, rgba(38,49,74,0.035) 1px, transparent 1px, transparent 34px);
+    color: var(--ink);
+    font-family: 'Iowan Old Style','Palatino Linotype', Georgia, serif;
+    min-height: 100vh;
+    padding: 0 0 40px 0;
+  }
+  .amt, .mono{
+    font-family: 'SFMono-Regular','JetBrains Mono', Menlo, Consolas, monospace;
+  }
+
+  header{
+    padding: 26px 20px 18px;
+    border-bottom: 2px solid var(--ink);
+  }
+  header h1{
+    margin:0;
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+  }
+  header p{
+    margin: 4px 0 0;
+    color: var(--ink-soft);
+    font-size: 13.5px;
+  }
+
+  .wrap{ max-width: 480px; margin: 0 auto; padding: 0 16px; }
+
+  /* Balances */
+  .balances{
+    display:flex; gap:12px;
+    margin-top: 18px;
+  }
+  .balance-card{
+    flex:1;
+    background: var(--paper-card);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 14px 14px 12px;
+    box-shadow: 0 2px 6px var(--shadow);
+  }
+  .balance-card .label{
+    font-size: 11.5px;
+    color: var(--ink-soft);
+    text-transform: none;
+    letter-spacing: 0.3px;
+  }
+  .balance-card .value{
+    font-size: 21px;
+    margin-top: 4px;
+    font-weight: 700;
+  }
+  .balance-card .value.neg{ color: var(--gasto); }
+  .balance-card .value.pos{ color: var(--ink); }
+
+  .rate-row{
+    display:flex; align-items:center; gap:8px;
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .rate-row input{
+    width: 90px;
+    border: none;
+    border-bottom: 1px solid var(--rule);
+    background: transparent;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--ink);
+    padding: 2px 2px;
+  }
+  .rate-row input:focus{ outline:none; border-bottom-color: var(--ink); }
+
+  /* Tabs */
+  .tabs{
+    display:flex;
+    margin-top: 24px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .tab{
+    flex:1;
+    text-align:center;
+    padding: 10px 0 9px;
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    cursor:pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    user-select:none;
+  }
+  .tab.active{ color: var(--ink); border-bottom-color: var(--ink); font-weight:600; }
+
+  /* Form */
+  form.entry{
+    margin-top: 16px;
+    background: var(--paper-card);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 14px;
+    box-shadow: 0 2px 6px var(--shadow);
+  }
+  .seg{
+    display:flex; gap:8px; margin-bottom: 12px;
+  }
+  .seg button{
+    flex:1;
+    padding: 9px 0;
+    border: 1px solid var(--rule);
+    background: transparent;
+    border-radius: 3px;
+    font-family: inherit;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    cursor:pointer;
+  }
+  .seg button.sel.ingreso{ background: var(--ingreso); border-color: var(--ingreso); color:#fff; }
+  .seg button.sel.gasto{ background: var(--gasto); border-color: var(--gasto); color:#fff; }
+
+  .field{ margin-bottom: 12px; }
+  .field label{
+    display:block; font-size: 11.5px; color: var(--ink-soft); margin-bottom: 4px;
+  }
+  .field input, .field select{
+    width:100%;
+    border: none;
+    border-bottom: 1px solid var(--rule);
+    background: transparent;
+    font-family: inherit;
+    font-size: 16px;
+    color: var(--ink);
+    padding: 6px 2px;
+  }
+  .field input:focus, .field select:focus{ outline:none; border-bottom-color: var(--ink); }
+  .row2{ display:flex; gap:10px; }
+  .row2 .field{ flex:1; }
+
+  .save-btn{
+    width:100%;
+    padding: 11px 0;
+    border:none;
+    border-radius: 3px;
+    background: var(--ink);
+    color: var(--paper-card);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight:600;
+    letter-spacing: 0.2px;
+    cursor:pointer;
+    margin-top: 4px;
+  }
+  .save-btn:active{ opacity:0.85; }
+
+  /* Ledger list */
+  .day-group{ margin-top: 22px; }
+  .day-title{
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .entry-row{
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    padding: 10px 2px;
+    border-bottom: 1px dashed var(--rule);
+    gap: 10px;
+  }
+  .entry-row:active{ background: rgba(38,49,74,0.04); }
+  .entry-left{ min-width:0; }
+  .entry-desc{
+    font-size: 15px;
+    color: var(--ink);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .entry-meta{
+    font-size: 11.5px; color: var(--ink-soft); margin-top: 2px;
+  }
+  .entry-right{ text-align:right; flex-shrink:0; }
+  .entry-amt{ font-size: 15.5px; font-weight:600; }
+  .entry-amt.ingreso{ color: var(--ingreso); }
+  .entry-amt.gasto{ color: var(--gasto); }
+  .entry-saldo{ font-size: 11px; color: var(--ink-soft); margin-top:2px; }
+
+  .empty{
+    text-align:center;
+    padding: 40px 20px;
+    color: var(--ink-soft);
+    font-size: 14px;
+  }
+
+  .del-btn{
+    border:none; background:transparent; color: var(--ink-soft);
+    font-size: 18px; line-height:1; padding: 4px 6px; cursor:pointer;
+  }
+  .swipe-wrap{ display:flex; align-items:center; }
+
+  footer.tally{
+    margin-top: 26px;
+    display:flex; justify-content: space-between;
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    padding-top: 10px;
+    border-top: 2px solid var(--ink);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap" style="padding:0; display:flex; align-items:flex-start; justify-content:space-between; gap:10px;">
+    <div>
+      <h1>Mis Cuentas</h1>
+      <p>Registro diario de ingresos y gastos</p>
+    </div>
+    <button id="gearBtn" title="Conexión con el servidor" style="border:1px solid var(--rule); background:var(--paper-card); border-radius:3px; font-size:17px; color:var(--ink-soft); cursor:pointer; padding:4px 9px; margin-top:2px;">&#9881;</button>
+  </div>
+</header>
+
+<div id="setupOverlay" style="display:none; position:fixed; inset:0; background:rgba(38,49,74,0.72); z-index:50; align-items:center; justify-content:center; padding:20px;">
+  <form id="setupForm" style="background:var(--paper-card); border-radius:4px; padding:20px; width:100%; max-width:360px; box-shadow:0 8px 26px rgba(0,0,0,0.32); font-family:inherit;">
+    <h2 style="margin:0 0 4px; font-size:18px; color:var(--ink);">Conectar con el servidor</h2>
+    <p style="margin:0 0 14px; font-size:13px; color:var(--ink-soft); line-height:1.4;">Pon la URL de tu servidor en la nube y el código de acceso, para que este dispositivo use los mismos datos que los demás.</p>
+    <div class="field">
+      <label for="servUrl">URL del servidor</label>
+      <input type="text" id="servUrl" placeholder="https://mis-cuentas-xxxx.onrender.com" required>
+    </div>
+    <div class="field">
+      <label for="servToken">Código de acceso</label>
+      <input type="text" id="servToken" placeholder="El código que pusiste en Render">
+    </div>
+    <div id="setupError" style="color:var(--gasto); font-size:12.5px; margin-bottom:8px; min-height:16px;"></div>
+    <button type="submit" class="save-btn" id="setupSaveBtn">Guardar y conectar</button>
+    <button type="button" id="setupCancelBtn" style="width:100%; margin-top:8px; background:transparent; border:none; color:var(--ink-soft); font-family:inherit; font-size:13px; cursor:pointer; display:none;">Cancelar</button>
+  </form>
+</div>
+
+<div class="wrap" id="appRoot" style="display:none;">
+
+  <div class="balances">
+    <div class="balance-card">
+      <div class="label">Saldo en dólares</div>
+      <div class="value" id="saldoUSD">$0.00</div>
+    </div>
+    <div class="balance-card">
+      <div class="label">Saldo en bolívares</div>
+      <div class="value" id="saldoVES">Bs 0,00</div>
+    </div>
+  </div>
+
+  <div class="rate-row">
+    <span>Tasa del día (Bs por $):</span>
+    <input type="number" id="tasaInput" inputmode="decimal" placeholder="0.00">
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="todos">Todos</div>
+    <div class="tab" data-tab="ingreso">Ingresos</div>
+    <div class="tab" data-tab="gasto">Gastos</div>
+  </div>
+
+  <form class="entry" id="entryForm">
+    <div class="seg">
+      <button type="button" class="sel ingreso" data-tipo="ingreso" id="btnIngreso">Ingreso</button>
+      <button type="button" data-tipo="gasto" id="btnGasto">Gasto</button>
+    </div>
+
+    <div class="field">
+      <label for="desc">Descripción</label>
+      <input type="text" id="desc" placeholder="Ej: venta del día, pasaje, sueldo" required>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label for="monto">Monto</label>
+        <input type="number" id="monto" inputmode="decimal" step="0.01" placeholder="0.00" required>
+      </div>
+      <div class="field">
+        <label for="moneda">Moneda</label>
+        <select id="moneda">
+          <option value="USD">Dólares</option>
+          <option value="VES">Bolívares</option>
+        </select>
+      </div>
+    </div>
+
+    <button type="submit" class="save-btn" id="saveBtn">Agregar ingreso</button>
+  </form>
+
+  <div id="listContainer"></div>
+
+  <footer class="tally">
+    <span id="countInfo">0 movimientos</span>
+    <span id="filterInfo">Mostrando: todos</span>
+  </footer>
+
+</div>
+
+<script>
+  // Guarda la configuración del servidor usando el almacenamiento propio de Claude
+  // cuando la app corre dentro de Claude; si se abre el archivo directamente en
+  // un navegador (doble clic), usa el almacenamiento del propio navegador.
+  window.configStore = window.storage || {
+    get: async function(key){
+      const v = localStorage.getItem('mis_cuentas_cfg_' + key);
+      return v ? { key, value: v, shared: false } : null;
+    },
+    set: async function(key, value){
+      localStorage.setItem('mis_cuentas_cfg_' + key, value);
+      return { key, value, shared: false };
+    }
+  };
+</script>
+
+<script>
+(function(){
+  const CONFIG_KEY = 'server_config_v1';
+
+  function limpiarURL(u){ return u.replace(/\/+$/, ''); }
+
+  function construirAlmacenRemoto(config){
+    const base = limpiarURL(config.url);
+    async function pedir(ruta, opts){
+      const res = await fetch(base + ruta, opts);
+      if(!res.ok){
+        let texto = '';
+        try{ texto = await res.text(); }catch(e){}
+        throw new Error(texto || ('HTTP ' + res.status));
+      }
+      return res.json();
+    }
+    return {
+      get: async (key) => {
+        const j = await pedir('/api/kv/' + encodeURIComponent(key), { headers: { 'X-Auth-Token': config.token } });
+        return (j.value === null || j.value === undefined) ? null : { key, value: j.value, shared: false };
+      },
+      set: async (key, value) => {
+        await pedir('/api/kv/' + encodeURIComponent(key), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'X-Auth-Token': config.token },
+          body: JSON.stringify({ value })
+        });
+        return { key, value, shared: false };
+      },
+      delete: async (key) => {
+        await pedir('/api/kv/' + encodeURIComponent(key), { method: 'DELETE', headers: { 'X-Auth-Token': config.token } });
+        return { key, deleted: true, shared: false };
+      },
+      list: async () => ({ keys: [], shared: false })
+    };
+  }
+
+  const setupOverlay = document.getElementById('setupOverlay');
+  const appRoot = document.getElementById('appRoot');
+  const servUrl = document.getElementById('servUrl');
+  const servToken = document.getElementById('servToken');
+  const setupError = document.getElementById('setupError');
+  const setupSaveBtn = document.getElementById('setupSaveBtn');
+  const setupCancelBtn = document.getElementById('setupCancelBtn');
+
+  let appIniciada = false;
+  function mostrarApp(){
+    setupOverlay.style.display = 'none';
+    appRoot.style.display = '';
+    if(!appIniciada){
+      appIniciada = true;
+      window.__iniciarApp && window.__iniciarApp();
+    }
+  }
+
+  async function cargarConfigYArrancar(){
+    let cfg = null;
+    try{
+      const raw = await window.configStore.get(CONFIG_KEY);
+      if(raw && raw.value) cfg = JSON.parse(raw.value);
+    }catch(e){}
+    if(cfg && cfg.url){
+      window.storage = construirAlmacenRemoto(cfg);
+      servUrl.value = cfg.url;
+      servToken.value = cfg.token || '';
+      mostrarApp();
+    } else {
+      setupOverlay.style.display = 'flex';
+    }
+  }
+
+  document.getElementById('setupForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const url = servUrl.value.trim();
+    const token = servToken.value.trim();
+    setupError.textContent = '';
+    if(!url){ setupError.textContent = 'Escribe la URL del servidor.'; return; }
+    const cfg = { url, token };
+    setupSaveBtn.disabled = true;
+    setupSaveBtn.textContent = 'Probando conexión...';
+    try{
+      const almacen = construirAlmacenRemoto(cfg);
+      await almacen.get('movimientos');
+      await window.configStore.set(CONFIG_KEY, JSON.stringify(cfg));
+      window.storage = almacen;
+      mostrarApp();
+      if(window.__refrescarApp) window.__refrescarApp();
+    }catch(err){
+      setupError.textContent = 'No se pudo conectar: ' + err.message;
+    }
+    setupSaveBtn.disabled = false;
+    setupSaveBtn.textContent = 'Guardar y conectar';
+  });
+
+  document.getElementById('gearBtn').addEventListener('click', ()=>{
+    setupCancelBtn.style.display = appIniciada ? '' : 'none';
+    setupOverlay.style.display = 'flex';
+  });
+  setupCancelBtn.addEventListener('click', ()=>{
+    setupOverlay.style.display = 'none';
+  });
+
+  cargarConfigYArrancar();
+})();
+</script>
+
+<script>
+window.__iniciarApp = function(){
+  const STORAGE_KEY = 'movimientos';
+  const RATE_KEY = 'tasa_dia';
+  let movimientos = [];
+  let tasa = 0;
+  let tipoActual = 'ingreso';
+  let filtro = 'todos';
+
+  const listContainer = document.getElementById('listContainer');
+  const saldoUSDEl = document.getElementById('saldoUSD');
+  const saldoVESEl = document.getElementById('saldoVES');
+  const tasaInput = document.getElementById('tasaInput');
+  const countInfo = document.getElementById('countInfo');
+  const filterInfo = document.getElementById('filterInfo');
+  const btnIngreso = document.getElementById('btnIngreso');
+  const btnGasto = document.getElementById('btnGasto');
+  const saveBtn = document.getElementById('saveBtn');
+
+  function fmtUSD(n){
+    const s = n.toFixed(2);
+    return (n<0? '-$' : '$') + Math.abs(n).toFixed(2);
+  }
+  function fmtVES(n){
+    const abs = Math.abs(n).toLocaleString('es-VE', {minimumFractionDigits:2, maximumFractionDigits:2});
+    return (n<0? '-Bs ' : 'Bs ') + abs;
+  }
+  function fmtFecha(iso){
+    const d = new Date(iso);
+    const opts = {weekday:'long', day:'numeric', month:'long'};
+    let s = d.toLocaleDateString('es-ES', opts);
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  }
+  function fmtHora(iso){
+    const d = new Date(iso);
+    return d.toLocaleTimeString('es-ES', {hour:'2-digit', minute:'2-digit'});
+  }
+
+  async function loadAll(){
+    try{
+      const r = await window.storage.get(STORAGE_KEY, false);
+      movimientos = r && r.value ? JSON.parse(r.value) : [];
+    }catch(e){ movimientos = []; }
+    try{
+      const r2 = await window.storage.get(RATE_KEY, false);
+      tasa = r2 && r2.value ? parseFloat(r2.value) : 0;
+    }catch(e){ tasa = 0; }
+    tasaInput.value = tasa ? tasa : '';
+    render();
+  }
+
+  async function saveMovimientos(){
+    try{ await window.storage.set(STORAGE_KEY, JSON.stringify(movimientos), false); }
+    catch(e){ console.error('No se pudo guardar', e); }
+  }
+  async function saveTasa(){
+    try{ await window.storage.set(RATE_KEY, String(tasa), false); }
+    catch(e){ console.error('No se pudo guardar la tasa', e); }
+  }
+
+  tasaInput.addEventListener('change', ()=>{
+    tasa = parseFloat(tasaInput.value) || 0;
+    saveTasa();
+  });
+
+  btnIngreso.addEventListener('click', ()=>{
+    tipoActual = 'ingreso';
+    btnIngreso.classList.add('sel','ingreso');
+    btnGasto.classList.remove('sel','gasto');
+    saveBtn.textContent = 'Agregar ingreso';
+  });
+  btnGasto.addEventListener('click', ()=>{
+    tipoActual = 'gasto';
+    btnGasto.classList.add('sel','gasto');
+    btnIngreso.classList.remove('sel','ingreso');
+    saveBtn.textContent = 'Agregar gasto';
+  });
+
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.addEventListener('click', ()=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      filtro = t.dataset.tab;
+      const labels = {todos:'todos', ingreso:'ingresos', gasto:'gastos'};
+      filterInfo.textContent = 'Mostrando: ' + labels[filtro];
+      render();
+    });
+  });
+
+  document.getElementById('entryForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const desc = document.getElementById('desc').value.trim();
+    const monto = parseFloat(document.getElementById('monto').value);
+    const moneda = document.getElementById('moneda').value;
+    if(!desc || !monto || monto <= 0) return;
+
+    movimientos.push({
+      id: Date.now() + '-' + Math.random().toString(36).slice(2,7),
+      fechaISO: new Date().toISOString(),
+      descripcion: desc,
+      tipo: tipoActual,
+      monto: monto,
+      moneda: moneda
+    });
+
+    document.getElementById('desc').value = '';
+    document.getElementById('monto').value = '';
+    document.getElementById('desc').focus();
+
+    await saveMovimientos();
+    render();
+  });
+
+  async function eliminar(id){
+    movimientos = movimientos.filter(m => m.id !== id);
+    await saveMovimientos();
+    render();
+  }
+
+  function calcularSaldos(lista){
+    let usd = 0, ves = 0;
+    lista.forEach(m=>{
+      const signo = m.tipo === 'ingreso' ? 1 : -1;
+      if(m.moneda === 'USD') usd += signo * m.monto;
+      else ves += signo * m.monto;
+    });
+    return {usd, ves};
+  }
+
+  function render(){
+    // saldos generales (siempre sobre TODOS los movimientos, no solo el filtro)
+    const totales = calcularSaldos(movimientos);
+    saldoUSDEl.textContent = fmtUSD(totales.usd);
+    saldoUSDEl.className = 'value ' + (totales.usd < 0 ? 'neg' : 'pos');
+    saldoVESEl.textContent = fmtVES(totales.ves);
+    saldoVESEl.className = 'value ' + (totales.ves < 0 ? 'neg' : 'pos');
+
+    const filtrados = movimientos.filter(m => filtro === 'todos' || m.tipo === filtro);
+    countInfo.textContent = filtrados.length + (filtrados.length === 1 ? ' movimiento' : ' movimientos');
+
+    listContainer.innerHTML = '';
+
+    if(filtrados.length === 0){
+      listContainer.innerHTML = '<div class="empty">Todavía no hay movimientos aquí.<br>Agrega el primero arriba.</div>';
+      return;
+    }
+
+    // orden cronológico ascendente para calcular saldo corriente por moneda, luego mostrar en orden descendente
+    const ordenAsc = [...movimientos].sort((a,b)=> new Date(a.fechaISO) - new Date(b.fechaISO));
+    const saldoCorriente = {};
+    const saldoPorId = {};
+    ordenAsc.forEach(m=>{
+      const signo = m.tipo === 'ingreso' ? 1 : -1;
+      saldoCorriente[m.moneda] = (saldoCorriente[m.moneda] || 0) + signo * m.monto;
+      saldoPorId[m.id] = saldoCorriente[m.moneda];
+    });
+
+    const ordenDesc = [...filtrados].sort((a,b)=> new Date(b.fechaISO) - new Date(a.fechaISO));
+
+    // agrupar por día
+    const grupos = {};
+    ordenDesc.forEach(m=>{
+      const d = new Date(m.fechaISO);
+      const key = d.toDateString();
+      if(!grupos[key]) grupos[key] = [];
+      grupos[key].push(m);
+    });
+
+    Object.keys(grupos).forEach(key=>{
+      const grupo = document.createElement('div');
+      grupo.className = 'day-group';
+      const titulo = document.createElement('div');
+      titulo.className = 'day-title';
+      titulo.textContent = fmtFecha(grupo && grupos[key][0].fechaISO);
+      grupo.appendChild(titulo);
+
+      grupos[key].forEach(m=>{
+        const row = document.createElement('div');
+        row.className = 'entry-row';
+        const saldo = saldoPorId[m.id];
+        const saldoTxt = m.moneda === 'USD' ? fmtUSD(saldo) : fmtVES(saldo);
+        const montoTxt = (m.moneda === 'USD' ? fmtUSD(m.monto) : fmtVES(m.monto));
+        row.innerHTML = `
+          <div class="entry-left">
+            <div class="entry-desc">${escapeHtml(m.descripcion)}</div>
+            <div class="entry-meta">${fmtHora(m.fechaISO)}</div>
+          </div>
+          <div class="swipe-wrap">
+            <div class="entry-right">
+              <div class="entry-amt ${m.tipo}">${m.tipo === 'ingreso' ? '+' : '-'}${montoTxt}</div>
+              <div class="entry-saldo">saldo: ${saldoTxt}</div>
+            </div>
+            <button class="del-btn" title="Eliminar">&times;</button>
+          </div>
+        `;
+        row.querySelector('.del-btn').addEventListener('click', ()=> eliminar(m.id));
+        grupo.appendChild(row);
+      });
+
+      listContainer.appendChild(grupo);
+    });
+  }
+
+  function escapeHtml(s){
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  let ultimoHash = '';
+  function hashDe(datos){ return JSON.stringify(datos); }
+
+  async function revisarCambios(){
+    try{
+      const r = await window.storage.get(STORAGE_KEY, false);
+      const datosRemotos = r && r.value ? JSON.parse(r.value) : [];
+      const h = hashDe(datosRemotos);
+      if(h !== ultimoHash){
+        movimientos = datosRemotos;
+        ultimoHash = h;
+        render();
+      }
+      const r2 = await window.storage.get(RATE_KEY, false);
+      const tasaRemota = r2 && r2.value ? parseFloat(r2.value) : 0;
+      if(tasaRemota !== tasa && document.activeElement !== tasaInput){
+        tasa = tasaRemota;
+        tasaInput.value = tasa ? tasa : '';
+      }
+    }catch(e){ /* silencioso: seguimos con los datos que ya tenemos */ }
+  }
+
+  // Revisa cambios del otro dispositivo cada 8 segundos,
+  // y también apenas vuelves a esta pestaña/app.
+  setInterval(revisarCambios, 8000);
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.visibilityState === 'visible') revisarCambios();
+  });
+  window.addEventListener('focus', revisarCambios);
+
+  loadAll().then(()=>{ ultimoHash = hashDe(movimientos); });
+
+  window.__refrescarApp = revisarCambios;
+};
+</script>
+
+</body>
+</html>
